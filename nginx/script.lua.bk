@@ -1,0 +1,75 @@
+local cjson = require "cjson"
+local io = require "io"
+local os = require "os"
+ 
+local upload = require "resty.upload"
+local chunk_size = 4096
+local form, err = upload:new(chunk_size)
+if not form then
+    ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+    ngx.say("Failed to create upload form: " .. err)
+    return
+end
+
+local file_meta
+local typ, err = form:read()
+
+if not typ then
+    ngx.status = ngx.HTTP_BAD_REQUEST
+    ngx.say("Failed to read form data: " .. err)
+    return
+end
+
+while true do
+    if typ == "header" then
+        local key, value = unpack(err)
+        if key == "Content-Disposition" then
+            local filename = value:match('filename="(.+)"')
+            if filename then
+                file_meta = { filename = filename, body_data = "" }
+            end
+        end
+    elseif typ == "body" then
+        if file_meta then
+            file_meta.body_data = file_meta.body_data .. err
+        end
+    elseif typ == "eof" then
+        break
+    else
+        ngx.status = ngx.HTTP_BAD_REQUEST
+        ngx.say("Unexpected form data type: " .. typ)
+        return
+    end
+    typ, err = form:read()
+end
+
+if not file_meta then
+    ngx.status = ngx.HTTP_BAD_REQUEST
+    ngx.say("No file uploaded")
+    return
+end
+ 
+-- 将文件保存到临时目录
+local tmp_path = ngx.var.tmpdir .. "/" .. file_meta.filename
+local tmp_file = io.open(tmp_path, "wb")
+if not tmp_file then
+    ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+    ngx.say("Failed to open temp file")
+    return
+end
+tmp_file:write(file_meta.body_data)
+tmp_file:close()
+ 
+-- 调用本地程序处理文件
+local command = "path/to/your/executable " .. tmp_path
+local handle = io.popen(command)
+local output = handle:read("*all")
+handle:close()
+ 
+-- 删除临时文件
+os.remove(tmp_path)
+ 
+-- 返回处理结果
+ngx.status = ngx.HTTP_OK
+ngx.header.content_type = "application/json"
+ngx.say(cjson.encode({status = "success", output = output}))

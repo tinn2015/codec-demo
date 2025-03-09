@@ -1,36 +1,34 @@
+local upload = require "resty.upload"
 local cjson = require "cjson"
-local io = require "io"
-local os = require "os"
- 
--- 获取上传的文件
-local file_meta = ngx.req.get_posted_file("file")
-if not file_meta then
-    ngx.status = ngx.HTTP_BAD_REQUEST
-    ngx.say("No file uploaded")
-    return
+
+local chunk_size = 5 -- should be set to 4096 or 8192
+                        -- for real-world settings
+
+local form, err = upload:new(chunk_size)
+if not form then
+    ngx.log(ngx.ERR, "failed to new upload: ", err)
+    ngx.exit(500)
 end
- 
--- 将文件保存到临时目录
-local tmp_path = ngx.var.tmpdir .. "/" .. file_meta.filename
-local tmp_file = io.open(tmp_path, "wb")
-if not tmp_file then
-    ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
-    ngx.say("Failed to open temp file")
-    return
+
+form:set_timeout(1000) -- 1 sec
+
+while true do
+    local typ, res, err = form:read()
+    if not typ then
+        ngx.say("failed to read: ", err)
+        return
+    end
+
+    ngx.say("read: ", cjson.encode({typ, res}))
+
+    if typ == "eof" then
+        break
+    end
 end
-tmp_file:write(file_meta.body_data)
-tmp_file:close()
- 
--- 调用本地程序处理文件
-local command = "path/to/your/executable " .. tmp_path
-local handle = io.popen(command)
-local output = handle:read("*all")
-handle:close()
- 
--- 删除临时文件
-os.remove(tmp_path)
- 
--- 返回处理结果
-ngx.status = ngx.HTTP_OK
-ngx.header.content_type = "application/json"
-ngx.say(cjson.encode({status = "success", output = output}))
+
+-- local typ, res, err = form:read()
+-- ngx.say("read: ", cjson.encode({typ, res}))
+ngx.status = 200
+ngx.header.content_type = "application/json" -- 设置响应内容类型为 JSON
+ngx.say(cjson.encode({code = 200, status = "success", message = "操作成功"}):gsub("操作成功", "操作成功"):iconv("UTF-8", "UTF-8//IGNORE")) -- 返回 JSON 数据
+ngx.exit(ngx.HTTP_OK)

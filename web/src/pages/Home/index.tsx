@@ -48,7 +48,7 @@ const HomePage: React.FC = () => {
     name: 'file',
     action: 'http://124.222.225.170:8080/upload',
     headers: {
-      authorization: 'authorization-text',
+      // authorization: 'authorization-text',
     },
     onChange(info) {
       if (info.file.status !== 'uploading') {
