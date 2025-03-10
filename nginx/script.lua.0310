@@ -1,0 +1,28 @@
+local upload = require "resty.upload"
+local cjson = require "cjson"
+
+-- 检查Content-Type头是否存在
+local content_type = ngx.req.get_headers()["Content-Type"]
+ngx.log(ngx.ERR, "【info】content_type", content_type) -- 将日志级别从 INFO 改为 ERR，因为默认 nginx 日志级别通常设置为 error
+if not content_type then
+    ngx.log(ngx.ERR, "Content-Type header not found")
+    ngx.status = 400
+    ngx.say(cjson.encode({code = 400, status = "error", message = "Content-Type header required"}))
+    ngx.exit(ngx.HTTP_BAD_REQUEST)
+end
+
+local chunk_size = 4096 -- 设置为生产环境推荐值
+ngx.log(ngx.INFO, "【info】===== start =====")
+
+local form, err = upload:new(chunk_size)
+if not form then
+    ngx.log(ngx.ERR, "failed to new upload: ", err)
+    ngx.status = 500
+    ngx.say(cjson.encode({code = 500, status = "error", message = "Failed to process upload"}))
+    ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+end
+
+ngx.status = 200
+ngx.header.content_type = "application/json; charset=utf-8"
+ngx.say(cjson.encode({code = 200, status = "success", message = "上传成功"}))
+ngx.exit(ngx.HTTP_OK)
