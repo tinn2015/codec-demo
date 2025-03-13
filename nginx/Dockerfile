@@ -15,6 +15,7 @@ RUN luarocks install lua-resty-upload
 # 复制本地的 nginx.conf 和 script.lua 到容器中
 COPY ./nginx.conf /usr/local/openresty/nginx/conf/nginx.conf
 COPY ./script.lua /etc/nginx/script.lua
+# COPY ./ffmpeg /home/codec/ffmpeg
 
 # 暴露端口
 EXPOSE 8080

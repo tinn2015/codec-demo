@@ -1,6 +1,7 @@
 import { defineConfig } from '@umijs/max';
 
 export default defineConfig({
+  favicons: ['./static/logo.png'], // 替换为你的favicon图标路径
   antd: {},
   access: {},
   model: {},
