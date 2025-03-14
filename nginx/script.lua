@@ -218,7 +218,7 @@ if not tmp_path or not file_exists(tmp_path) then
 end
 -- 检查目录是否存在（如果无法提前创建）
 os.execute("mkdir -p " .. DOWNLOAD_DIR)
-local filename = "compress." .. os.date("%Y%m%d%H%M%S") .. ".jpg"
+local filename = "compress." .. os.date("%Y%m%d%H%M%S") .. "." .. compress_params.outputFormat
 local download_path = DOWNLOAD_DIR .. filename
 -- local handle_start_time = os.clock() * 1000  -- 获取当前时间戳，单位为毫秒
 -- ngx.log(ngx.ERR, "[ffmpeg Cmd ]", "time /home/codec-demo/nginx/ffmpeg -i " .. tmp_path .. " " .. download_path)  

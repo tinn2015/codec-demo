@@ -370,7 +370,7 @@ const HomePage: React.FC = () => {
                       suffix="%"
                     />
                   </span>
-                  {/* <span>
+                  <span>
                     <Statistic
                       title="压缩处理时间:"
                       value={fileInfo.handleTime}
@@ -381,7 +381,7 @@ const HomePage: React.FC = () => {
                       }
                       suffix="秒"
                     />
-                  </span> */}
+                  </span>
                   <span>
                     <Statistic
                       title="图片上传时间:"
